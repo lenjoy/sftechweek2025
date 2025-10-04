@@ -97,18 +97,7 @@ app.get('/api/events/:id', async (c) => {
     
     // Get speakers with enhanced details
     const speakers = await DB.prepare(`
-      SELECT 
-        s.*,
-        sp.bio,
-        sp.social_links,
-        sp.previous_companies,
-        sp.achievements,
-        sp.portfolio_companies,
-        sp.investment_focus
-      FROM event_speakers s
-      LEFT JOIN speaker_profiles sp ON s.name = sp.name AND s.company = sp.company
-      WHERE s.event_id = ?
-      ORDER BY s.role ASC
+      SELECT * FROM event_speakers WHERE event_id = ? ORDER BY role ASC
     `).bind(id).all()
     
     // Get categories
