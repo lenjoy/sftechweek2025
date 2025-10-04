@@ -6,8 +6,10 @@
 - **Features**: Event browsing, search & filtering, categorization, responsive design, D1 database storage
 
 ## URLs
+- **Production Website**: https://e17b520c.sf-tech-week-events.pages.dev
+- **Cloudflare Pages**: https://sf-tech-week-events.pages.dev
 - **Local Development**: https://3000-ig5bos8o6dzzjcxzloivq-6532622b.e2b.dev
-- **API Health Check**: https://3000-ig5bos8o6dzzjcxzloivq-6532622b.e2b.dev/api/stats
+- **API Health Check**: https://e17b520c.sf-tech-week-events.pages.dev/api/stats
 - **GitHub**: (To be configured)
 
 ## Data Architecture
@@ -25,27 +27,31 @@
   - Structured data with proper relationships and indexes
 
 ## Currently Completed Features
-✅ **Event Data Collection**: Comprehensive SF Tech Week events from multiple sources  
-✅ **D1 Database Setup**: Complete schema with events, speakers, categories, and mappings  
-✅ **RESTful API**: Full CRUD operations with search, filtering, and stats endpoints  
-✅ **Responsive Frontend**: Modern UI with Tailwind CSS, FontAwesome icons  
-✅ **Real-time Search**: Live filtering by text, category, and event type  
-✅ **Event Categories**: AI/ML, Networking, Panel, Workshop, Wellness, Fintech, etc.  
-✅ **Event Details**: Comprehensive information including speakers, organizers, locations  
-✅ **Statistics Dashboard**: Event counts, categories, and type distributions  
-✅ **Local Development**: PM2 process management with hot reloading  
+✅ **Enhanced Event Labeling**: Comprehensive technical tags, business focus, difficulty levels  
+✅ **Advanced Filtering**: Filter by technical stack, industry vertical, target audience, difficulty  
+✅ **Technical Focus Tags**: Enterprise AI, Multimodal AI, Robotics, Quantum Computing, etc.  
+✅ **Business Context**: Industry verticals, target audiences, difficulty levels  
+✅ **D1 Database Setup**: Enhanced schema with technical tags and business metadata  
+✅ **RESTful API**: Advanced search with technical and business filtering  
+✅ **Responsive Frontend**: Modern UI with enhanced event cards and filtering  
+✅ **Real-time Search**: Live filtering across all technical and business dimensions  
+✅ **Production Deployment**: Live on Cloudflare Pages with D1 database  
+✅ **Event Categories**: 25+ specialized categories including AI, Blockchain, Legal Tech  
+✅ **Event Details**: Technical focus, business impact, speaker information  
+✅ **Statistics Dashboard**: Enhanced event analytics and distributions  
 
 ## Functional Entry URIs
 ### API Endpoints
-- **GET /api/events** - Retrieve all events with optional filtering
-  - Query parameters: `search`, `category`, `type`, `date`
-  - Returns: Events with speakers and category information
+- **GET /api/events** - Retrieve all events with advanced filtering
+  - Query parameters: `search`, `category`, `type`, `date`, `difficulty`, `vertical`, `audience`
+  - Enhanced search: Searches across technical tags, business focus, and descriptions
+  - Returns: Events with speakers, categories, and enhanced metadata
 - **GET /api/events/:id** - Get detailed event information
-  - Returns: Event details with speakers and categories arrays
+  - Returns: Complete event details including technical tags, business focus, difficulty level
 - **GET /api/categories** - List all event categories with counts
-  - Returns: Categories with event counts for each
-- **GET /api/stats** - Get application statistics
-  - Returns: Total events, categories, and event type distribution
+  - Returns: 25+ specialized categories with event counts
+- **GET /api/stats** - Get comprehensive application statistics
+  - Returns: Total events, categories, technical distributions, and business analytics
 
 ### Frontend Pages
 - **GET /** - Main events browser interface
@@ -67,9 +73,11 @@
 6. **Clear Filters**: Use the "Clear Filters" button to reset all search criteria
 
 ## Deployment
-- **Platform**: Cloudflare Pages (ready for deployment)
-- **Status**: ✅ Active (Local Development)
-- **Tech Stack**: Hono + TypeScript + TailwindCSS + D1 Database + Cloudflare Workers
+- **Platform**: Cloudflare Pages + D1 Database + Cloudflare Workers
+- **Status**: ✅ Active (Production Deployed)
+- **Production URL**: https://e17b520c.sf-tech-week-events.pages.dev
+- **Database**: Cloudflare D1 with enhanced schema and production data
+- **Tech Stack**: Hono + TypeScript + TailwindCSS + Enhanced Event Labeling
 - **Last Updated**: 2025-10-04
 
 ## Database Schema
@@ -112,11 +120,14 @@ npm test                  # Test application endpoint
 - **Policy**: Legal and regulatory discussions
 - **Cybersecurity**: Security and privacy focused events
 
-## Sample Events Included
-- AI, Infra, & the Future of Generative Media (HSBC + a16z)
-- Anthropic AI Founder Salon (Invite-only technical gathering)
-- Virio Run Club (Wellness networking event)
-- BATTER UP! Regional Pitch Competition (Startup showcase)
-- Mercury Brunch & Water Cycling on the Bay (Networking activity)
+## Sample Enhanced Events Included
+- **AI, Infra, & the Future of Generative Media** - *Technical Focus*: Generative AI, Multimodal AI, MLOps | *Industry*: Media & Entertainment | *Level*: Intermediate
+- **Anthropic AI Founder Salon** - *Technical Focus*: Large Language Models, AI Ethics, Enterprise AI | *Industry*: AI Research | *Level*: Advanced  
+- **Physical AI Breakfast: Robotics & Embodied Intelligence** - *Technical Focus*: Robotics, Computer Vision, Edge Computing | *Industry*: Manufacturing | *Level*: Advanced
+- **Web3 × AI: Decentralized Intelligence** - *Technical Focus*: Blockchain, Decentralized AI, Distributed Computing | *Industry*: Blockchain & Crypto | *Level*: Advanced
+- **Cyber60: AI-Powered Security Innovation** - *Technical Focus*: Cybersecurity AI, Threat Detection, Zero Trust | *Industry*: Cybersecurity | *Level*: Intermediate
+- **Quantum AI: IBM Research Frontiers** - *Technical Focus*: Quantum Computing, Quantum Machine Learning | *Industry*: Quantum Computing | *Level*: Advanced
+- **BATTER UP! AI Startup Pitch Competition** - *Technical Focus*: Multiple AI verticals | *Industry*: Venture Capital | *Level*: Intermediate
+- **Enterprise AI Adoption Breakfast** - *Technical Focus*: Enterprise AI, B2B Integration, AI ROI | *Industry*: Enterprise Software | *Level*: Intermediate
 
 The application successfully demonstrates a complete full-stack web application with modern architecture, real-time search capabilities, and comprehensive event management suitable for any tech conference or event directory.
