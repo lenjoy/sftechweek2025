@@ -10,7 +10,7 @@
 - **Cloudflare Pages**: https://sf-tech-week-events.pages.dev
 - **Local Development**: https://3000-ig5bos8o6dzzjcxzloivq-6532622b.e2b.dev
 - **API Health Check**: https://e17b520c.sf-tech-week-events.pages.dev/api/stats
-- **GitHub**: (To be configured)
+- **GitHub Repository**: https://github.com/lenjoy/sftechweek2025
 
 ## Data Architecture
 - **Data Models**: 
