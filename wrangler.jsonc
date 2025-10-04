@@ -1,7 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "webapp",
-  "account_id": "f549ca3b89f7d2fd5b5ac8cb1bca1ba2",
+  "name": "sf-tech-week-events",
   "compatibility_date": "2025-10-04",
   "pages_build_output_dir": "./dist",
   "compatibility_flags": [

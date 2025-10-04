@@ -17,7 +17,7 @@ app.use('/static/*', serveStatic({ root: './public' }))
 // API Routes for Events
 app.get('/api/events', async (c) => {
   const { DB } = c.env
-  const { search, category, type, date } = c.req.query()
+  const { search, category, type, date, difficulty, vertical, audience } = c.req.query()
   
   let query = `
     SELECT e.*, 
@@ -33,9 +33,9 @@ app.get('/api/events', async (c) => {
   const params = []
   
   if (search) {
-    query += ` AND (e.title LIKE ? OR e.description LIKE ? OR e.location LIKE ?)`
+    query += ` AND (e.title LIKE ? OR e.description LIKE ? OR e.location LIKE ? OR e.technical_tags LIKE ? OR e.business_focus LIKE ?)`
     const searchTerm = `%${search}%`
-    params.push(searchTerm, searchTerm, searchTerm)
+    params.push(searchTerm, searchTerm, searchTerm, searchTerm, searchTerm)
   }
   
   if (category) {
@@ -51,6 +51,21 @@ app.get('/api/events', async (c) => {
   if (date) {
     query += ` AND e.event_date = ?`
     params.push(date)
+  }
+  
+  if (difficulty) {
+    query += ` AND e.difficulty_level = ?`
+    params.push(difficulty)
+  }
+  
+  if (vertical) {
+    query += ` AND e.industry_vertical = ?`
+    params.push(vertical)
+  }
+  
+  if (audience) {
+    query += ` AND e.target_audience LIKE ?`
+    params.push(`%${audience}%`)
   }
   
   query += ` GROUP BY e.id ORDER BY e.event_date ASC, e.start_time ASC`
@@ -171,20 +186,14 @@ app.get('/', (c) => {
             
             <!-- Search and Filters -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-8">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="md:col-span-2">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <div class="md:col-span-2 lg:col-span-2">
                         <label class="block text-sm font-medium text-gray-700 mb-2">Search Events</label>
-                        <input type="text" id="searchInput" placeholder="Search by title, description, or location..." 
+                        <input type="text" id="searchInput" placeholder="Search by title, tech stack, business focus..." 
                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                        <select id="categoryFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="">All Categories</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Event Type</label>
                         <select id="typeFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="">All Types</option>
                             <option value="panel">Panel</option>
@@ -196,12 +205,63 @@ app.get('/', (c) => {
                             <option value="conference">Conference</option>
                         </select>
                     </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Difficulty</label>
+                        <select id="difficultyFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Levels</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="flex justify-between items-center mt-4">
-                    <button id="clearFilters" class="px-4 py-2 text-gray-600 hover:text-gray-800">
-                        <i class="fas fa-times mr-2"></i>Clear Filters
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                        <select id="categoryFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Categories</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Industry</label>
+                        <select id="verticalFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Industries</option>
+                            <option value="AI Research">AI Research</option>
+                            <option value="Enterprise Software">Enterprise Software</option>
+                            <option value="Financial Services">Financial Services</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Manufacturing & Robotics">Manufacturing</option>
+                            <option value="Media & Entertainment">Media</option>
+                            <option value="Cybersecurity">Cybersecurity</option>
+                            <option value="Legal Technology">Legal Tech</option>
+                            <option value="Developer Tools">Developer Tools</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Audience</label>
+                        <select id="audienceFilter" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Audiences</option>
+                            <option value="Founders">Founders</option>
+                            <option value="Engineers">Engineers</option>
+                            <option value="VCs">VCs & Investors</option>
+                            <option value="Researchers">Researchers</option>
+                            <option value="Technical Leaders">Tech Leaders</option>
+                            <option value="Product Managers">Product Managers</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center mt-6">
+                    <button id="clearFilters" class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Clear All Filters
                     </button>
-                    <div id="searchStats" class="text-sm text-gray-500"></div>
+                    <div class="flex items-center gap-4">
+                        <button id="advancedToggle" class="text-blue-600 hover:text-blue-800 text-sm">
+                            <i class="fas fa-cog mr-1"></i>Advanced Filters
+                        </button>
+                        <div id="searchStats" class="text-sm text-gray-500"></div>
+                    </div>
                 </div>
             </div>
             
