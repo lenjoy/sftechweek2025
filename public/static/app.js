@@ -1,0 +1,56 @@
+// SF Tech Week Events Frontend Application
+
+class EventsApp {
+  constructor() {
+    this.events = []
+    this.categories = []
+    this.filteredEvents = []
+    this.searchTimeout = null
+    
+    this.init()
+  }
+  
+  async init() {
+    await this.loadCategories()
+    await this.loadStats()
+    await this.loadEvents()
+    this.setupEventListeners()
+    this.hideLoading()
+  }
+  
+  async loadCategories() {
+    try {
+      const response = await axios.get('/api/categories')
+      this.categories = response.data.results || []
+      this.populateCategories()
+    } catch (error) {
+      console.error('Failed to load categories:', error)
+    }
+  }
+  
+  async loadStats() {
+    try {
+      const response = await axios.get('/api/stats')
+      const stats = response.data
+      this.renderStats(stats)
+    } catch (error) {
+      console.error('Failed to load stats:', error)
+    }
+  }
+  
+  async loadEvents() {
+    try {
+      const response = await axios.get('/api/events')
+      this.events = response.data.results || []
+      this.filteredEvents = [...this.events]
+      this.renderEvents()
+      this.updateSearchStats()
+    } catch (error) {
+      console.error('Failed to load events:', error)
+      this.showError('Failed to load events. Please try again later.')
+    }
+  }
+  
+  populateCategories() {
+    const categorySelect = document.getElementById('categoryFilter')
+    this.categories.forEach(category => {\n      const option = document.createElement('option')\n      option.value = category.name\n      option.textContent = `${category.name} (${category.event_count || 0})`\n      categorySelect.appendChild(option)\n    })\n  }\n  \n  renderStats(stats) {\n    const statsContainer = document.getElementById('statsCards')\n    statsContainer.innerHTML = `\n      <div class=\"bg-white rounded-lg shadow-md p-6\">\n        <div class=\"flex items-center\">\n          <div class=\"flex-shrink-0\">\n            <i class=\"fas fa-calendar-check text-3xl text-blue-600\"></i>\n          </div>\n          <div class=\"ml-4\">\n            <p class=\"text-sm font-medium text-gray-500\">Total Events</p>\n            <p class=\"text-2xl font-bold text-gray-900\">${stats.totalEvents}</p>\n          </div>\n        </div>\n      </div>\n      \n      <div class=\"bg-white rounded-lg shadow-md p-6\">\n        <div class=\"flex items-center\">\n          <div class=\"flex-shrink-0\">\n            <i class=\"fas fa-tags text-3xl text-green-600\"></i>\n          </div>\n          <div class=\"ml-4\">\n            <p class=\"text-sm font-medium text-gray-500\">Categories</p>\n            <p class=\"text-2xl font-bold text-gray-900\">${stats.totalCategories}</p>\n          </div>\n        </div>\n      </div>\n      \n      <div class=\"bg-white rounded-lg shadow-md p-6\">\n        <div class=\"flex items-center\">\n          <div class=\"flex-shrink-0\">\n            <i class=\"fas fa-chart-bar text-3xl text-purple-600\"></i>\n          </div>\n          <div class=\"ml-4\">\n            <p class=\"text-sm font-medium text-gray-500\">Most Popular</p>\n            <p class=\"text-lg font-bold text-gray-900\">${stats.eventsByType?.[0]?.event_type || 'N/A'}</p>\n          </div>\n        </div>\n      </div>\n    `\n  }\n  \n  renderEvents() {\n    const container = document.getElementById('eventsContainer')\n    const emptyState = document.getElementById('emptyState')\n    \n    if (this.filteredEvents.length === 0) {\n      container.innerHTML = ''\n      emptyState.classList.remove('hidden')\n      return\n    }\n    \n    emptyState.classList.add('hidden')\n    \n    container.innerHTML = this.filteredEvents.map(event => this.renderEventCard(event)).join('')\n  }\n  \n  renderEventCard(event) {\n    const organizersArray = this.parseJSON(event.organizers) || []\n    const tagsArray = this.parseJSON(event.tags) || []\n    \n    const dateStr = event.event_date ? new Date(event.event_date).toLocaleDateString() : 'TBD'\n    const timeStr = event.start_time ? `${event.start_time}${event.end_time ? ` - ${event.end_time}` : ''}` : 'Time TBD'\n    \n    const typeIcon = this.getTypeIcon(event.event_type)\n    const typeColor = this.getTypeColor(event.event_type)\n    \n    return `\n      <div class=\"bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300\">\n        <div class=\"p-6\">\n          <div class=\"flex items-start justify-between mb-4\">\n            <div class=\"flex-1\">\n              <h3 class=\"text-xl font-bold text-gray-900 mb-2\">${this.escapeHtml(event.title)}</h3>\n              <div class=\"flex items-center text-sm text-gray-600 mb-2\">\n                <i class=\"fas fa-calendar mr-2\"></i>\n                <span>${dateStr}</span>\n                <i class=\"fas fa-clock ml-4 mr-2\"></i>\n                <span>${timeStr}</span>\n              </div>\n            </div>\n            ${event.is_invite_only ? '<div class=\"ml-4\"><span class=\"inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800\"><i class=\"fas fa-lock mr-1\"></i>Invite Only</span></div>' : ''}\n          </div>\n          \n          ${event.description ? `<p class=\"text-gray-700 mb-4 line-clamp-3\">${this.escapeHtml(event.description)}</p>` : ''}\n          \n          <div class=\"flex items-center text-sm text-gray-600 mb-4\">\n            ${event.location ? `<i class=\"fas fa-map-marker-alt mr-2\"></i><span class=\"mr-4\">${this.escapeHtml(event.location)}</span>` : ''}\n            ${event.neighborhood ? `<i class=\"fas fa-building mr-2\"></i><span>${this.escapeHtml(event.neighborhood)}</span>` : ''}\n          </div>\n          \n          ${event.speakers ? `<div class=\"mb-4\"><p class=\"text-sm text-gray-600\"><i class=\"fas fa-microphone mr-2\"></i><strong>Speakers:</strong> ${this.escapeHtml(event.speakers)}</p></div>` : ''}\n          \n          <div class=\"flex items-center justify-between\">\n            <div class=\"flex flex-wrap gap-2\">\n              <span class=\"inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${typeColor}\">\n                <i class=\"${typeIcon} mr-1\"></i>\n                ${this.formatEventType(event.event_type)}\n              </span>\n              ${organizersArray.slice(0, 2).map(org => \n                `<span class=\"inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800\">${this.escapeHtml(org)}</span>`\n              ).join('')}\n              ${organizersArray.length > 2 ? `<span class=\"text-xs text-gray-500\">+${organizersArray.length - 2} more</span>` : ''}\n            </div>\n          </div>\n          \n          ${tagsArray.length > 0 ? `\n            <div class=\"mt-4 pt-4 border-t border-gray-200\">\n              <div class=\"flex flex-wrap gap-1\">\n                ${tagsArray.map(tag => \n                  `<span class=\"inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-100 text-blue-800\">${this.escapeHtml(tag)}</span>`\n                ).join('')}\n              </div>\n            </div>\n          ` : ''}\n        </div>\n      </div>\n    `\n  }\n  \n  setupEventListeners() {\n    const searchInput = document.getElementById('searchInput')\n    const categoryFilter = document.getElementById('categoryFilter')\n    const typeFilter = document.getElementById('typeFilter')\n    const clearFilters = document.getElementById('clearFilters')\n    \n    searchInput.addEventListener('input', (e) => {\n      clearTimeout(this.searchTimeout)\n      this.searchTimeout = setTimeout(() => {\n        this.applyFilters()\n      }, 300)\n    })\n    \n    categoryFilter.addEventListener('change', () => this.applyFilters())\n    typeFilter.addEventListener('change', () => this.applyFilters())\n    \n    clearFilters.addEventListener('click', () => {\n      searchInput.value = ''\n      categoryFilter.value = ''\n      typeFilter.value = ''\n      this.applyFilters()\n    })\n  }\n  \n  applyFilters() {\n    const search = document.getElementById('searchInput').value.toLowerCase()\n    const category = document.getElementById('categoryFilter').value\n    const type = document.getElementById('typeFilter').value\n    \n    this.filteredEvents = this.events.filter(event => {\n      const matchesSearch = !search || \n        event.title.toLowerCase().includes(search) || \n        (event.description && event.description.toLowerCase().includes(search)) ||\n        (event.location && event.location.toLowerCase().includes(search))\n      \n      const matchesCategory = !category || \n        (event.categories && event.categories.toLowerCase().includes(category.toLowerCase()))\n      \n      const matchesType = !type || event.event_type === type\n      \n      return matchesSearch && matchesCategory && matchesType\n    })\n    \n    this.renderEvents()\n    this.updateSearchStats()\n  }\n  \n  updateSearchStats() {\n    const statsEl = document.getElementById('searchStats')\n    const total = this.events.length\n    const filtered = this.filteredEvents.length\n    \n    if (filtered === total) {\n      statsEl.textContent = `Showing all ${total} events`\n    } else {\n      statsEl.textContent = `Showing ${filtered} of ${total} events`\n    }\n  }\n  \n  parseJSON(str) {\n    try {\n      return JSON.parse(str)\n    } catch (e) {\n      return null\n    }\n  }\n  \n  escapeHtml(unsafe) {\n    return unsafe\n         .replace(/&/g, \"&amp;\")\n         .replace(/</g, \"&lt;\")\n         .replace(/>/g, \"&gt;\")\n         .replace(/\"/g, \"&quot;\")\n         .replace(/'/g, \"&#039;\");\n  }\n  \n  getTypeIcon(type) {\n    const icons = {\n      'panel': 'fas fa-users',\n      'networking': 'fas fa-handshake',\n      'workshop': 'fas fa-tools',\n      'wellness': 'fas fa-heart',\n      'pitch_competition': 'fas fa-trophy',\n      'salon': 'fas fa-comments',\n      'conference': 'fas fa-building',\n      'reception': 'fas fa-glass-cheers'\n    }\n    return icons[type] || 'fas fa-calendar'\n  }\n  \n  getTypeColor(type) {\n    const colors = {\n      'panel': 'bg-purple-100 text-purple-800',\n      'networking': 'bg-green-100 text-green-800',\n      'workshop': 'bg-yellow-100 text-yellow-800',\n      'wellness': 'bg-pink-100 text-pink-800',\n      'pitch_competition': 'bg-red-100 text-red-800',\n      'salon': 'bg-indigo-100 text-indigo-800',\n      'conference': 'bg-blue-100 text-blue-800',\n      'reception': 'bg-orange-100 text-orange-800'\n    }\n    return colors[type] || 'bg-gray-100 text-gray-800'\n  }\n  \n  formatEventType(type) {\n    if (!type) return 'Event'\n    return type.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')\n  }\n  \n  hideLoading() {\n    document.getElementById('loadingState').classList.add('hidden')\n  }\n  \n  showError(message) {\n    const container = document.getElementById('eventsContainer')\n    container.innerHTML = `\n      <div class=\"col-span-full bg-red-50 border border-red-200 rounded-lg p-6 text-center\">\n        <i class=\"fas fa-exclamation-triangle text-3xl text-red-600 mb-4\"></i>\n        <p class=\"text-red-800\">${message}</p>\n      </div>\n    `\n    this.hideLoading()\n  }\n}\n\n// Initialize the app when DOM is loaded\ndocument.addEventListener('DOMContentLoaded', () => {\n  new EventsApp()\n})"

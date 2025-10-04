@@ -1,11 +1,12 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "webapp",
+  "account_id": "f549ca3b89f7d2fd5b5ac8cb1bca1ba2",
   "compatibility_date": "2025-10-04",
   "pages_build_output_dir": "./dist",
   "compatibility_flags": [
     "nodejs_compat"
-  ]
+  ],
   // "vars": {
   //   "MY_VAR": "my-variable"
   // },
@@ -21,13 +22,13 @@
   //     "bucket_name": "my-bucket"
   //   }
   // ],
-  // "d1_databases": [
-  //   {
-  //     "binding": "MY_DB",
-  //     "database_name": "my-database",
-  //     "database_id": ""
-  //   }
-  // ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "webapp-production",
+      "database_id": "c9c6a54e-c961-4934-a7b7-259aa8292b52"
+    }
+  ],
   // "ai": {
   //   "binding": "AI"
   // }
