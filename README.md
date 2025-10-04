@@ -6,18 +6,20 @@
 - **Features**: Event browsing, search & filtering, categorization, responsive design, D1 database storage
 
 ## URLs
-- **Production Website**: https://e17b520c.sf-tech-week-events.pages.dev
-- **Cloudflare Pages**: https://sf-tech-week-events.pages.dev
+- **Production Website**: https://7bc92cc5.sf-tech-week-events.pages.dev
+- **Cloudflare Pages**: https://sf-tech-week-events.pages.dev  
 - **Local Development**: https://3000-ig5bos8o6dzzjcxzloivq-6532622b.e2b.dev
-- **API Health Check**: https://e17b520c.sf-tech-week-events.pages.dev/api/stats
+- **API Health Check**: https://7bc92cc5.sf-tech-week-events.pages.dev/api/stats
 - **GitHub Repository**: https://github.com/lenjoy/sftechweek2025
 
 ## Data Architecture
 - **Data Models**: 
-  - Events (title, description, date/time, location, organizers, type)
-  - Event Speakers (name, title, company, role)
+  - Events (title, description, date/time, location, organizers, type, technical_tags, business_focus)
+  - Event Speakers (name, title, company, role, bio, expertise, LinkedIn profiles, speaking topics)
+  - Speaker Profiles (comprehensive bios, social links, achievements, portfolio companies)
   - Event Categories (AI/ML, Networking, Panel, Workshop, etc.)
   - Category Mappings (many-to-many relationships)
+  - Speaker Expertise Tags (taxonomy for speaker expertise and topics)
 - **Storage Services**: 
   - Cloudflare D1 SQLite database for events data
   - Local development using `--local` flag for fast iteration
@@ -39,19 +41,27 @@
 ✅ **Event Categories**: 25+ specialized categories including AI, Blockchain, Legal Tech  
 ✅ **Event Details**: Technical focus, business impact, speaker information  
 ✅ **Statistics Dashboard**: Enhanced event analytics and distributions  
+✅ **Comprehensive Speaker Profiles**: Detailed speaker information with bios, expertise, and social links  
+✅ **Speaker Database**: Enhanced speaker schema with LinkedIn profiles, expertise tags, and speaking topics  
+✅ **Interactive Event Modals**: Click events to see detailed speaker profiles and additional information  
+✅ **Speaker Analytics**: Speaker count statistics and top companies represented  
+✅ **Notable Speakers Included**: Jennifer Li (a16z GP), Ben Mann (Anthropic Co-founder), Jay Gambetta (IBM Quantum VP), Malcolm Gladwell  
 
 ## Functional Entry URIs
 ### API Endpoints
 - **GET /api/events** - Retrieve all events with advanced filtering
   - Query parameters: `search`, `category`, `type`, `date`, `difficulty`, `vertical`, `audience`
   - Enhanced search: Searches across technical tags, business focus, and descriptions
-  - Returns: Events with speakers, categories, and enhanced metadata
+  - Returns: Events with speakers, categories, enhanced metadata, and speaker counts
 - **GET /api/events/:id** - Get detailed event information
-  - Returns: Complete event details including technical tags, business focus, difficulty level
+  - Returns: Complete event details including technical tags, business focus, difficulty level, and comprehensive speaker profiles
+- **GET /api/speakers** - List all speakers with search and filtering
+  - Query parameters: `search`, `expertise`, `company`
+  - Returns: Detailed speaker profiles with bio, expertise, LinkedIn links, and event counts
 - **GET /api/categories** - List all event categories with counts
   - Returns: 25+ specialized categories with event counts
 - **GET /api/stats** - Get comprehensive application statistics
-  - Returns: Total events, categories, technical distributions, and business analytics
+  - Returns: Total events, categories, speakers, technical distributions, business analytics, and top companies
 
 ### Frontend Pages
 - **GET /** - Main events browser interface
@@ -67,22 +77,31 @@
 5. **View Details**: Each event card shows comprehensive information including:
    - Date, time, and location details
    - Event description and organizers
-   - Speaker information where available
+   - Enhanced speaker information with company and role details
    - Event type and invitation status
    - Relevant tags and categories
-6. **Clear Filters**: Use the "Clear Filters" button to reset all search criteria
+6. **Interactive Event Details**: Click any event card to open a detailed modal with:
+   - Comprehensive speaker profiles with bios and expertise
+   - LinkedIn and social media links for speakers
+   - Speaker expertise tags and speaking topics
+   - Complete event information and technical focus
+7. **Speaker Exploration**: Browse detailed speaker profiles including notable figures like Jennifer Li (a16z General Partner), Ben Mann (Anthropic Co-founder), Jay Gambetta (IBM Quantum VP Fellow)
+8. **Clear Filters**: Use the "Clear Filters" button to reset all search criteria
 
 ## Deployment
 - **Platform**: Cloudflare Pages + D1 Database + Cloudflare Workers
-- **Status**: ✅ Active (Production Deployed)
-- **Production URL**: https://e17b520c.sf-tech-week-events.pages.dev
+- **Status**: ✅ Active (Production Deployed with Enhanced Speaker Profiles)
+- **Production URL**: https://7bc92cc5.sf-tech-week-events.pages.dev
 - **Database**: Cloudflare D1 with enhanced schema and production data
 - **Tech Stack**: Hono + TypeScript + TailwindCSS + Enhanced Event Labeling
 - **Last Updated**: 2025-10-04
 
 ## Database Schema
-- **events**: Main events table with all event details
-- **event_speakers**: Speaker information linked to events
+- **events**: Main events table with all event details, technical tags, business focus
+- **event_speakers**: Enhanced speaker information linked to events with bios, expertise, LinkedIn profiles
+- **speaker_profiles**: Comprehensive speaker database with detailed bios, achievements, social links
+- **speaker_expertise_tags**: Taxonomy of speaker expertise areas and topics
+- **speaker_expertise_mappings**: Many-to-many relationships between speakers and expertise
 - **event_categories**: Predefined categories for classification
 - **event_category_mappings**: Many-to-many relationships between events and categories
 
