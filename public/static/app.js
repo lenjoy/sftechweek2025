@@ -79,11 +79,11 @@ class EventsApp {
       <div class="bg-white rounded-lg shadow-md p-6">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <i class="fas fa-tags text-3xl text-green-600"></i>
+            <i class="fas fa-microphone-alt text-3xl text-green-600"></i>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Categories</p>
-            <p class="text-2xl font-bold text-gray-900">${stats.totalCategories}</p>
+            <p class="text-sm font-medium text-gray-500">Total Speakers</p>
+            <p class="text-2xl font-bold text-gray-900">${stats.totalSpeakers || 0}</p>
           </div>
         </div>
       </div>
@@ -91,11 +91,12 @@ class EventsApp {
       <div class="bg-white rounded-lg shadow-md p-6">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <i class="fas fa-chart-bar text-3xl text-purple-600"></i>
+            <i class="fas fa-building text-3xl text-purple-600"></i>
           </div>
           <div class="ml-4">
-            <p class="text-sm font-medium text-gray-500">Most Popular</p>
-            <p class="text-lg font-bold text-gray-900">${stats.eventsByType?.[0]?.event_type || 'N/A'}</p>
+            <p class="text-sm font-medium text-gray-500">Top Company</p>
+            <p class="text-lg font-bold text-gray-900">${stats.topCompanies?.[0]?.company || 'N/A'}</p>
+            <p class="text-xs text-gray-500">${stats.topCompanies?.[0]?.events_count || 0} events</p>
           </div>
         </div>
       </div>
@@ -115,6 +116,14 @@ class EventsApp {
     emptyState.classList.add('hidden')
     
     container.innerHTML = this.filteredEvents.map(event => this.renderEventCard(event)).join('')
+    
+    // Add click listeners to event cards
+    container.querySelectorAll('.event-card').forEach((card, index) => {
+      card.style.cursor = 'pointer'
+      card.addEventListener('click', () => {
+        this.showEventDetails(this.filteredEvents[index])
+      })
+    })
   }
   
   renderEventCard(event) {
@@ -161,7 +170,15 @@ class EventsApp {
           
           ${event.target_audience ? `<div class="mb-3 text-sm"><span class="inline-flex items-center px-2 py-1 rounded-full bg-purple-100 text-purple-800 text-xs"><i class="fas fa-users mr-1"></i>${this.escapeHtml(event.target_audience)}</span></div>` : ''}
           
-          ${event.speakers ? `<div class="mb-4"><p class="text-sm text-gray-600"><i class="fas fa-microphone mr-2"></i><strong>Speakers:</strong> ${this.escapeHtml(event.speakers)}</p></div>` : ''}
+          ${event.speakers ? `
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+              <div class="flex items-center mb-2">
+                <i class="fas fa-microphone mr-2 text-blue-600"></i>
+                <strong class="text-sm font-medium text-gray-700">Speakers (${event.speakers_count || 1})</strong>
+              </div>
+              <p class="text-sm text-gray-600 leading-relaxed">${this.escapeHtml(event.speakers)}</p>
+            </div>
+          ` : ''}
           
           <div class="flex items-center justify-between mb-4">
             <div class="flex flex-wrap gap-2">
@@ -348,6 +365,148 @@ class EventsApp {
     document.getElementById('loadingState').classList.add('hidden')
   }
   
+  async showEventDetails(event) {
+    try {
+      const response = await axios.get(`/api/events/${event.id}`)
+      const eventDetails = response.data
+      this.renderEventModal(eventDetails)
+    } catch (error) {
+      console.error('Failed to load event details:', error)
+      alert('Failed to load event details. Please try again.')
+    }
+  }
+  
+  renderEventModal(event) {
+    const modalHtml = `
+      <div id="eventModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div class="p-6">
+            <div class="flex justify-between items-start mb-4">
+              <h2 class="text-2xl font-bold text-gray-900">${this.escapeHtml(event.title)}</h2>
+              <button id="closeModal" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Event Details</h3>
+                <div class="space-y-2 text-sm">
+                  <div class="flex items-center">
+                    <i class="fas fa-calendar mr-2 text-gray-500"></i>
+                    <span>${event.event_date ? new Date(event.event_date).toLocaleDateString() : 'TBD'}</span>
+                  </div>
+                  <div class="flex items-center">
+                    <i class="fas fa-clock mr-2 text-gray-500"></i>
+                    <span>${event.start_time || 'Time TBD'}${event.end_time ? ` - ${event.end_time}` : ''}</span>
+                  </div>
+                  ${event.location ? `<div class="flex items-center"><i class="fas fa-map-marker-alt mr-2 text-gray-500"></i><span>${this.escapeHtml(event.location)}</span></div>` : ''}
+                  ${event.event_type ? `<div class="flex items-center"><i class="fas fa-tag mr-2 text-gray-500"></i><span>${this.formatEventType(event.event_type)}</span></div>` : ''}
+                  ${event.difficulty_level ? `<div class="flex items-center"><i class="fas fa-signal mr-2 text-gray-500"></i><span>${this.escapeHtml(event.difficulty_level)}</span></div>` : ''}
+                </div>
+                
+                ${event.description ? `
+                  <div class="mt-4">
+                    <h4 class="font-semibold text-gray-800 mb-2">Description</h4>
+                    <p class="text-gray-700 text-sm">${this.escapeHtml(event.description)}</p>
+                  </div>
+                ` : ''}
+              </div>
+              
+              <div>
+                ${event.speakers && event.speakers.length > 0 ? `
+                  <h3 class="text-lg font-semibold text-gray-800 mb-3">Speakers & Panelists</h3>
+                  <div class="space-y-4">
+                    ${event.speakers.map(speaker => this.renderSpeakerCard(speaker)).join('')}
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+            
+            ${event.technical_tags || event.business_focus || event.industry_vertical ? `
+              <div class="mt-6 pt-4 border-t border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">Additional Information</h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  ${event.technical_tags ? `<div><strong>Technical Focus:</strong><br/><span class="text-gray-600">${this.escapeHtml(event.technical_tags)}</span></div>` : ''}
+                  ${event.business_focus ? `<div><strong>Business Focus:</strong><br/><span class="text-gray-600">${this.escapeHtml(event.business_focus)}</span></div>` : ''}
+                  ${event.industry_vertical ? `<div><strong>Industry:</strong><br/><span class="text-gray-600">${this.escapeHtml(event.industry_vertical)}</span></div>` : ''}
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml)
+    document.getElementById('closeModal').addEventListener('click', this.closeEventModal)
+    document.getElementById('eventModal').addEventListener('click', (e) => {
+      if (e.target.id === 'eventModal') this.closeEventModal()
+    })
+  }
+  
+  renderSpeakerCard(speaker) {
+    const expertise = this.parseJSON(speaker.expertise) || []
+    const speakingTopics = this.parseJSON(speaker.speaking_topics) || []
+    
+    return `
+      <div class="bg-gray-50 rounded-lg p-4">
+        <div class="flex items-start space-x-3">
+          ${speaker.image_url ? `
+            <img src="${speaker.image_url}" alt="${this.escapeHtml(speaker.name)}" 
+                 class="w-12 h-12 rounded-full object-cover flex-shrink-0">
+          ` : `
+            <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center flex-shrink-0">
+              <i class="fas fa-user text-gray-600"></i>
+            </div>
+          `}
+          <div class="flex-1 min-w-0">
+            <h4 class="text-sm font-semibold text-gray-900">${this.escapeHtml(speaker.name)}</h4>
+            ${speaker.title && speaker.company ? `
+              <p class="text-sm text-gray-600">${this.escapeHtml(speaker.title)} at ${this.escapeHtml(speaker.company)}</p>
+            ` : speaker.role ? `
+              <p class="text-sm text-gray-600">${this.escapeHtml(speaker.role)}</p>
+            ` : ''}
+            
+            ${speaker.bio ? `
+              <p class="text-xs text-gray-500 mt-2 line-clamp-2">${this.escapeHtml(speaker.bio)}</p>
+            ` : ''}
+            
+            ${expertise.length > 0 ? `
+              <div class="mt-2">
+                <div class="flex flex-wrap gap-1">
+                  ${expertise.slice(0, 3).map(exp => 
+                    `<span class="inline-block px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">${this.escapeHtml(exp)}</span>`
+                  ).join('')}
+                </div>
+              </div>
+            ` : ''}
+            
+            <div class="flex items-center space-x-2 mt-2">
+              ${speaker.linkedin_url ? `
+                <a href="${speaker.linkedin_url}" target="_blank" rel="noopener noreferrer" 
+                   class="text-blue-600 hover:text-blue-800">
+                  <i class="fab fa-linkedin text-sm"></i>
+                </a>
+              ` : ''}
+              ${speaker.twitter_url ? `
+                <a href="${speaker.twitter_url}" target="_blank" rel="noopener noreferrer" 
+                   class="text-blue-400 hover:text-blue-600">
+                  <i class="fab fa-twitter text-sm"></i>
+                </a>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      </div>
+    `
+  }
+  
+  closeEventModal() {
+    const modal = document.getElementById('eventModal')
+    if (modal) {
+      modal.remove()
+    }
+  }
+
   showError(message) {
     const container = document.getElementById('eventsContainer')
     container.innerHTML = `

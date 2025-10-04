@@ -21,8 +21,9 @@ app.get('/api/events', async (c) => {
   
   let query = `
     SELECT e.*, 
-           GROUP_CONCAT(DISTINCT s.name || ' (' || s.role || ')') as speakers,
-           GROUP_CONCAT(DISTINCT cat.name) as categories
+           GROUP_CONCAT(DISTINCT s.name || ' (' || COALESCE(s.title, s.role) || ' at ' || s.company || ')') as speakers,
+           GROUP_CONCAT(DISTINCT cat.name) as categories,
+           COUNT(DISTINCT s.id) as speakers_count
     FROM events e
     LEFT JOIN event_speakers s ON e.id = s.event_id
     LEFT JOIN event_category_mappings ecm ON e.id = ecm.event_id
@@ -94,9 +95,20 @@ app.get('/api/events/:id', async (c) => {
       return c.json({ error: 'Event not found' }, 404)
     }
     
-    // Get speakers
+    // Get speakers with enhanced details
     const speakers = await DB.prepare(`
-      SELECT * FROM event_speakers WHERE event_id = ?
+      SELECT 
+        s.*,
+        sp.bio,
+        sp.social_links,
+        sp.previous_companies,
+        sp.achievements,
+        sp.portfolio_companies,
+        sp.investment_focus
+      FROM event_speakers s
+      LEFT JOIN speaker_profiles sp ON s.name = sp.name AND s.company = sp.company
+      WHERE s.event_id = ?
+      ORDER BY s.role ASC
     `).bind(id).all()
     
     // Get categories
@@ -136,12 +148,64 @@ app.get('/api/categories', async (c) => {
   }
 })
 
+app.get('/api/speakers', async (c) => {
+  const { DB } = c.env
+  const { search, expertise, company } = c.req.query()
+  
+  let query = `
+    SELECT DISTINCT
+      s.name,
+      s.company,
+      s.title,
+      s.role,
+      s.bio,
+      s.linkedin_url,
+      s.twitter_url,
+      s.image_url,
+      s.expertise,
+      s.speaking_topics,
+      COUNT(DISTINCT s.event_id) as events_count
+    FROM event_speakers s
+    WHERE 1=1
+  `
+  
+  const params = []
+  
+  if (search) {
+    query += ` AND (s.name LIKE ? OR s.company LIKE ? OR s.title LIKE ? OR s.bio LIKE ?)`
+    const searchTerm = `%${search}%`
+    params.push(searchTerm, searchTerm, searchTerm, searchTerm)
+  }
+  
+  if (expertise) {
+    query += ` AND s.expertise LIKE ?`
+    params.push(`%${expertise}%`)
+  }
+  
+  if (company) {
+    query += ` AND s.company LIKE ?`
+    params.push(`%${company}%`)
+  }
+  
+  query += ` GROUP BY s.name, s.company ORDER BY events_count DESC, s.name ASC`
+  
+  try {
+    const stmt = DB.prepare(query)
+    const result = await stmt.bind(...params).all()
+    return c.json(result)
+  } catch (error) {
+    console.error('Database error:', error)
+    return c.json({ error: 'Failed to fetch speakers' }, 500)
+  }
+})
+
 app.get('/api/stats', async (c) => {
   const { DB } = c.env
   
   try {
     const totalEvents = await DB.prepare('SELECT COUNT(*) as count FROM events').first()
     const totalCategories = await DB.prepare('SELECT COUNT(*) as count FROM event_categories').first()
+    const totalSpeakers = await DB.prepare('SELECT COUNT(DISTINCT name || company) as count FROM event_speakers').first()
     const eventsByType = await DB.prepare(`
       SELECT event_type, COUNT(*) as count 
       FROM events 
@@ -150,10 +214,21 @@ app.get('/api/stats', async (c) => {
       ORDER BY count DESC
     `).all()
     
+    const topCompanies = await DB.prepare(`
+      SELECT company, COUNT(DISTINCT event_id) as events_count
+      FROM event_speakers 
+      WHERE company IS NOT NULL AND company != ''
+      GROUP BY company 
+      ORDER BY events_count DESC, company ASC
+      LIMIT 10
+    `).all()
+    
     return c.json({
       totalEvents: totalEvents?.count || 0,
       totalCategories: totalCategories?.count || 0,
-      eventsByType: eventsByType.results || []
+      totalSpeakers: totalSpeakers?.count || 0,
+      eventsByType: eventsByType.results || [],
+      topCompanies: topCompanies.results || []
     })
   } catch (error) {
     console.error('Database error:', error)
